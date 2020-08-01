@@ -44,13 +44,11 @@ public class DropWizardServer {
     bootstrap.addBundle(new JdbiExceptionsBundle());
   }
 
-  public <T extends Configuration> void enableRateLimiting(
-      final Bootstrap<T> bootstrap) {
+  public <T extends Configuration> void enableRateLimiting(final Bootstrap<T> bootstrap) {
     bootstrap.addBundle(new RateLimitBundle(new InMemoryRateLimiterFactory()));
   }
 
-
-  public  Jdbi createJdbi(final AppConfig configuration, final Environment environment) {
+  public Jdbi createJdbi(final AppConfig configuration, final Environment environment) {
     final JdbiFactory factory = new JdbiFactory();
     final Jdbi jdbi =
         factory.build(environment, configuration.getDatabase(), "postgresql-connection-pool");

@@ -30,7 +30,6 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.jdbi.v3.core.Jdbi;
 import org.triplea.db.JdbiDatabase;
 import org.triplea.http.client.AuthenticationHeaders;
-import org.triplea.http.client.web.socket.WebsocketPaths;
 
 /**
  * Main entry-point for launching drop wizard HTTP server. This class is responsible for configuring
