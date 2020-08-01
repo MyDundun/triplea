@@ -4,8 +4,8 @@ plugins {
 }
 
 archivesBaseName = "$group-$name"
-description = 'TripleA DropWizard Http Server'
-mainClassName = 'org.triplea.http.ServerApplication'
+description = 'TripleA Maps Http Server; manages the maps database, provides access to game clients to download and upload maps'
+mainClassName = 'org.triplea.maps.server.MapsServer'
 ext {
     releasesDir = file("$buildDir/releases")
 }
@@ -20,38 +20,21 @@ configurations {
 }
 
 dependencies {
-    errorprone "com.github.ben-manes.caffeine:caffeine:$caffeineVersion"
-
-    implementation "com.liveperson:dropwizard-websockets:$dropwizardWebsocketsVersion"
-    implementation "com.sun.mail:jakarta.mail:$jakartaMailVersion"
-    implementation "com.sun.xml.bind:jaxb-core:$jaxbCoreVersion"
-    implementation "com.sun.xml.bind:jaxb-impl:$jaxbImplVersion"
     implementation "es.moki.ratelimitj:ratelimitj-dropwizard:$rateLimitjVersion"
     implementation "es.moki.ratelimitj:ratelimitj-inmemory:$rateLimitjVersion"
     implementation "io.dropwizard:dropwizard-auth:$dropwizardVersion"
     implementation "io.dropwizard:dropwizard-core:$dropwizardVersion"
     implementation "io.dropwizard:dropwizard-jdbi3:$dropwizardVersion"
     implementation "io.github.openfeign:feign-gson:$openFeignVersion"
-    implementation "javax.activation:activation:$javaxActivationVersion"
-    implementation "javax.xml.bind:jaxb-api:$jaxbApiVersion"
     implementation "org.jdbi:jdbi3-core:$jdbiVersion"
     implementation "org.jdbi:jdbi3-sqlobject:$jdbiVersion"
-    implementation "at.favre.lib:bcrypt:$bcryptVersion"
-    implementation project(':domain-data')
-    implementation project(':dropwizard-common')
     implementation project(':http-clients')
     implementation project(':java-extras')
     runtimeOnly "org.postgresql:postgresql:$postgresqlVersion"
     testImplementation "com.github.database-rider:rider-junit5:$databaseRiderVersion"
-    testImplementation "com.sun.mail:jakarta.mail:$jakartaMailVersion"
     testImplementation "io.dropwizard:dropwizard-testing:$dropwizardVersion"
-    testImplementation "org.awaitility:awaitility:$awaitilityVersion"
-    testImplementation "org.java-websocket:Java-WebSocket:$javaWebsocketVersion"
     testImplementation "uk.co.datumedge:hamcrest-json:$hamcrestJsonVersion"
     testImplementation project(":test-common")
-    testImplementation project(':domain-data')
-    testImplementation project(':http-clients')
-    testImplementation project(':java-extras')
 }
 
 jar {

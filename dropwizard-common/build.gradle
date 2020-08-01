@@ -1,0 +1,34 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+}
+
+archivesBaseName = "$group-$name"
+description = 'Contains common code generic to drop-wizard servers'
+
+configurations {
+    testImplementation {
+        // database-rider brings in slf4j-simple as a transitive dependency
+        // DropWizard has logback baked in and cannot have multiple slf4j bindings.
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
+}
+
+dependencies {
+    implementation "io.dropwizard:dropwizard-auth:$dropwizardVersion"
+    implementation "io.dropwizard:dropwizard-core:$dropwizardVersion"
+    implementation "io.dropwizard:dropwizard-jdbi3:$dropwizardVersion"
+    implementation "io.github.openfeign:feign-gson:$openFeignVersion"
+    implementation "es.moki.ratelimitj:ratelimitj-dropwizard:$rateLimitjVersion"
+    implementation "es.moki.ratelimitj:ratelimitj-inmemory:$rateLimitjVersion"
+    implementation "org.jdbi:jdbi3-core:$jdbiVersion"
+    implementation "org.jdbi:jdbi3-sqlobject:$jdbiVersion"
+    implementation project(':java-extras')
+    testImplementation "com.github.database-rider:rider-junit5:$databaseRiderVersion"
+    testImplementation "io.dropwizard:dropwizard-testing:$dropwizardVersion"
+    testImplementation "uk.co.datumedge:hamcrest-json:$hamcrestJsonVersion"
+    testImplementation project(":test-common")
+}
+
+shadowJar {
+    archiveClassifier.set ''
+}

@@ -1,4 +1,4 @@
-package org.triplea.http;
+package org.triplea.maps.server;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.cache.CacheBuilder;
@@ -29,77 +29,42 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.jdbi.v3.core.Jdbi;
 import org.triplea.db.JdbiDatabase;
-import org.triplea.dropwizard.common.DropWizardServer;
 import org.triplea.http.client.AuthenticationHeaders;
 import org.triplea.http.client.web.socket.WebsocketPaths;
-import org.triplea.modules.access.authentication.ApiKeyAuthenticator;
-import org.triplea.modules.access.authentication.AuthenticatedUser;
-import org.triplea.modules.access.authorization.BannedPlayerFilter;
-import org.triplea.modules.access.authorization.RoleAuthorizer;
-import org.triplea.modules.chat.ChatMessagingService;
-import org.triplea.modules.chat.Chatters;
-import org.triplea.modules.error.reporting.ErrorReportController;
-import org.triplea.modules.forgot.password.ForgotPasswordController;
-import org.triplea.modules.game.hosting.GameHostingController;
-import org.triplea.modules.game.listing.GameListing;
-import org.triplea.modules.game.listing.GameListingController;
-import org.triplea.modules.game.lobby.watcher.LobbyWatcherController;
-import org.triplea.modules.game.participants.PlayersInGameController;
-import org.triplea.modules.moderation.access.log.AccessLogController;
-import org.triplea.modules.moderation.audit.history.ModeratorAuditHistoryController;
-import org.triplea.modules.moderation.bad.words.BadWordsController;
-import org.triplea.modules.moderation.ban.name.UsernameBanController;
-import org.triplea.modules.moderation.ban.user.UserBanController;
-import org.triplea.modules.moderation.chat.history.GameChatHistoryController;
-import org.triplea.modules.moderation.disconnect.user.DisconnectUserController;
-import org.triplea.modules.moderation.moderators.ModeratorsController;
-import org.triplea.modules.moderation.mute.user.MuteUserController;
-import org.triplea.modules.moderation.remote.actions.RemoteActionsController;
-import org.triplea.modules.player.info.PlayerInfoController;
-import org.triplea.modules.user.account.create.CreateAccountController;
-import org.triplea.modules.user.account.login.LoginController;
-import org.triplea.modules.user.account.update.UpdateAccountController;
-import org.triplea.web.socket.GameConnectionWebSocket;
-import org.triplea.web.socket.PlayerConnectionWebSocket;
-import org.triplea.web.socket.SessionBannedCheck;
-import org.triplea.web.socket.WebSocketMessagingBus;
 
 /**
  * Main entry-point for launching drop wizard HTTP server. This class is responsible for configuring
  * any Jersey plugins, registering resources (controllers) and injecting those resources with
  * configuration properties from 'AppConfig'.
  */
-public class ServerApplication extends Application<AppConfig> {
+public class MapsServerApplication extends Application<MapsServerAppConfig> {
 
-  private ServerEndpointConfig gameConnectionWebsocket;
-  private ServerEndpointConfig playerConnectionWebsocket;
+  private static final String[] DEFAULT_ARGS = new String[] {"server", "configuration.yml"};
 
   /**
    * Main entry-point method, launches the drop-wizard http server. If no args are passed then will
    * use default values suitable for local development.
    */
   public static void main(final String[] args) throws Exception {
-    DropWizardServer.startServer(new ServerApplication(), args);
+    final MapsServerApplication application = new MapsServerApplication();
+    // if no args are provided then we will use default values.
+    application.run(args.length == 0 ? DEFAULT_ARGS : args);
   }
 
   @Override
-  public void initialize(final Bootstrap<AppConfig> bootstrap) {
-    DropWizardServer.enableConfigurationEnvironmentVariableSubstitution(bootstrap);
-    DropWizardServer.unwrapJdbiSqlExceptionsForBetterStackTraces(bootstrap);
-    DropWizardServer.enableRateLimiting(bootstrap);
+  public void initialize(final Bootstrap<MapsServerAppConfig> bootstrap) {
+    // This bootstrap will replace ${...} values in YML configuration with environment
+    // variable values. Without it, all values in the YML configuration are treated as literals.
+    bootstrap.setConfigurationSourceProvider(
+        new SubstitutingSourceProvider(
+            bootstrap.getConfigurationSourceProvider(), new EnvironmentVariableSubstitutor(false)));
 
-    // Note, websocket endpoint is instantiated dynamically on every new connection and does
-    // not allow for constructor injection. To inject objects, we use 'userProperties' of the
-    // socket configuration that can then be retrieved from a websocket session.
-    gameConnectionWebsocket =
-        ServerEndpointConfig.Builder.create(
-                GameConnectionWebSocket.class, WebsocketPaths.GAME_CONNECTIONS)
-            .build();
-
-    playerConnectionWebsocket =
-        ServerEndpointConfig.Builder.create(
-                PlayerConnectionWebSocket.class, WebsocketPaths.PLAYER_CONNECTIONS)
-            .build();
+    // From: https://www.dropwizard.io/0.7.1/docs/manual/jdbi.html
+    // By adding the JdbiExceptionsBundle to your application, Dropwizard will automatically unwrap
+    // ant thrown SQLException or DBIException instances. This is critical for debugging, since
+    // otherwise only the common wrapper exception’s stack trace is logged.
+    bootstrap.addBundle(new JdbiExceptionsBundle());
+    bootstrap.addBundle(new RateLimitBundle(new InMemoryRateLimiterFactory()));
 
     bootstrap.addBundle(new WebsocketBundle(gameConnectionWebsocket, playerConnectionWebsocket));
   }
